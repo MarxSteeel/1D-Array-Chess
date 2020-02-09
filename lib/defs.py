@@ -33,6 +33,11 @@ symbols = {1: "♟", 2: "♞", 3: "♝", 4: "♜", 5: "♛", 6: "♚",
 
 start_fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
+pce_char = ".PNBRQKpnbrqk"
+side_char = "wb-"
+rank_char = "12345678"
+file_char = "abcdefgh"
+
 max_game_moves = 2048
 max_position_moves = 256
 max_depth = 64
@@ -49,10 +54,15 @@ piece_col = [colors["both"], colors["white"], colors["white"], colors["white"],
 
 piece_pawn = [0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0]
 piece_knight = [0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0]
-piece_king = [0, 0, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 1]
+piece_king = [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1]
 piece_rook_queen = [0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0]
 piece_bishop_queen = [0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0]
 piece_slides = [0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0]
+
+knight_dir = [-8, -19, -21, -12, 8, 19, 21, 12]
+rook_dir = [-1, -10, 1, 10]
+bishop_dir = [-9, -11, 9, 11]
+king_dir = [-1, -10, 1, 10, -9, -11, 9, 11]
 
 
 def get_square(file, rank):

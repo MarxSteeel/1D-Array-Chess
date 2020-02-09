@@ -76,6 +76,64 @@ class Board(object):
         self.position_key = self._generate_position_key()
         self._update_material()
 
+    def sq_attacked(self, sq, side):
+
+        def not_offboard(piece): return piece != defs.squares["offboard"]
+
+        def same_color(piece): return defs.piece_col[piece] == side
+        
+        def knight_or_king(direction, check):
+            for i in range(8):
+                piece = self.pieces[sq + direction[i]]
+                if not_offboard(piece) and same_color(piece):
+                    is_piece = check[piece] == 1
+                    if is_piece:
+                        return True
+            return False
+        
+        def rook_or_bishop(direction, check):
+            for i in range(4):
+                dir = direction[i]
+                atk_sq = sq + dir
+                piece = self.pieces[atk_sq]
+                while not_offboard(piece):
+                    if piece != defs.pieces["empty"]:
+                        is_rook = check[piece] == 1
+                        if same_color(piece) and is_rook:
+                            return True
+                        else:
+                            break
+                    atk_sq += dir
+                    piece = self.pieces[atk_sq]
+        
+        if side == defs.colors["white"]:
+            first_pawn = self.pieces[sq - 11] == defs.pieces["wp"]
+            second_pawn = self.pieces[sq - 9] == defs.pieces["wp"]
+        else:
+            first_pawn = self.pieces[sq + 11] == defs.pieces["bp"]
+            second_pawn = self.pieces[sq + 9] == defs.pieces["bp"]
+        knight = knight_or_king(defs.knight_dir, defs.piece_knight)
+        king = knight_or_king(defs.king_dir, defs.piece_king)
+        rook = rook_or_bishop(defs.rook_dir, defs.piece_rook_queen)
+        bishop = rook_or_bishop(defs.bishop_dir, defs.piece_bishop_queen)
+        if first_pawn or second_pawn or knight or king or rook or bishop:
+            return True
+        else:
+            return False
+
+    def print_sq_attacked(self, side):
+        print("\n" + "Attacked: " + "\n")
+        rank = defs.ranks["8"]
+        while rank >= defs.ranks["1"]:
+            line = str(rank + 1) + "  "
+            file = defs.files["a"]
+            for file in range(defs.files["h"] + 1):
+                sq = defs.get_square(file, rank)
+                piece = "X" if self.sq_attacked(sq, side) else "-"
+                line += " " + piece + " "
+            print(line)
+            rank -= 1
+
     def _reset(self):
         self.files, self.ranks = self._init_files_ranks()
         self.pieces = [defs.squares["offboard"]] * defs.brd_sq_num
