@@ -1,4 +1,5 @@
 import lib.defs as defs
+from lib.movegen import MoveGenerator
 
 
 class Board(object):
@@ -81,7 +82,7 @@ class Board(object):
         def not_offboard(piece): return piece != defs.squares["offboard"]
 
         def same_color(piece): return defs.piece_col[piece] == side
-        
+
         def knight_or_king(direction, check):
             for i in range(8):
                 piece = self.pieces[sq + direction[i]]
@@ -90,7 +91,7 @@ class Board(object):
                     if is_piece:
                         return True
             return False
-        
+
         def rook_or_bishop(direction, check):
             for i in range(4):
                 dir = direction[i]
@@ -105,7 +106,7 @@ class Board(object):
                             break
                     atk_sq += dir
                     piece = self.pieces[atk_sq]
-        
+
         if side == defs.colors["white"]:
             first_pawn = self.pieces[sq - 11] == defs.pieces["wp"]
             second_pawn = self.pieces[sq - 9] == defs.pieces["wp"]
@@ -116,10 +117,7 @@ class Board(object):
         king = knight_or_king(defs.king_dir, defs.piece_king)
         rook = rook_or_bishop(defs.rook_dir, defs.piece_rook_queen)
         bishop = rook_or_bishop(defs.bishop_dir, defs.piece_bishop_queen)
-        if first_pawn or second_pawn or knight or king or rook or bishop:
-            return True
-        else:
-            return False
+        return first_pawn or second_pawn or knight or king or rook or bishop
 
     def print_sq_attacked(self, side):
         print("\n" + "Attacked: " + "\n")
@@ -134,8 +132,18 @@ class Board(object):
             print(line)
             rank -= 1
 
+    def generate_moves(self):
+        self.move_generator.generate_moves()
+
+    def print_move_list(self):
+        i = 1
+        for move in self.move_list:
+            print("Move " + str(i) + ": " + self._print_move(move))
+            i += 1
+
     def _reset(self):
         self.files, self.ranks = self._init_files_ranks()
+        self.move_generator = MoveGenerator(self)
         self.pieces = [defs.squares["offboard"]] * defs.brd_sq_num
         for i in range(64):
             self.pieces[defs.sq120(i)] = defs.pieces["empty"]
@@ -149,6 +157,33 @@ class Board(object):
         self.castle_permit = 0
         self.material = [0, 0]
         self.position_key = self._generate_position_key()
+        self.ply = 0
+        self.move_list = []
+        self.move_scores = []
+        self.move_list_start = [0]
+
+    def _print_move(self, move):
+        file_from = self.files[defs.from_sq(move)]
+        rank_from = self.ranks[defs.from_sq(move)]
+        file_to = self.files[defs.to_sq(move)]
+        rank_to = self.ranks[defs.to_sq(move)]
+        fromsq = defs.file_char[file_from] + defs.rank_char[rank_from]
+        tosq = defs.file_char[file_to] + defs.rank_char[rank_to]
+        move_str = fromsq + tosq
+        promoted = defs.promoted(move) != defs.pieces["empty"]
+        if promoted:
+            piece_char = "q"
+            is_knight = defs.piece_knight[piece_char] == 1
+            is_rook = defs.piece_rook_queen[piece_char] == 1
+            is_bishop = defs.piece_bishop_queen[piece_char] == 1
+            if is_knight:
+                piece_char = "n"
+            elif is_rook and not is_bishop:
+                piece_char = "r"
+            elif is_bishop and not is_rook:
+                piece_char = "b"
+            move_str += piece_char
+        return move_str
 
     def _init_files_ranks(self):
         files_board = []

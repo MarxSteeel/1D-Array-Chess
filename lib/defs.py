@@ -63,14 +63,20 @@ knight_dir = [-8, -19, -21, -12, 8, 19, 21, 12]
 rook_dir = [-1, -10, 1, 10]
 bishop_dir = [-9, -11, 9, 11]
 king_dir = [-1, -10, 1, 10, -9, -11, 9, 11]
+dir_num = [0, 0, 8, 4, 4, 8, 8, 0, 8, 4, 4, 8, 8]
+piece_dir = [0, 0, knight_dir, bishop_dir, rook_dir, king_dir, king_dir,
+             0, knight_dir, bishop_dir, rook_dir, king_dir, king_dir]
+
+white_non_slide = [pieces["wn"], pieces["wk"]]
+black_non_slide = [pieces["bn"], pieces["bk"]]
+white_slide = [pieces["wb"], pieces["wr"], pieces["wq"]]
+black_slide = [pieces["bb"], pieces["br"], pieces["bq"]]
 
 
-def get_square(file, rank):
-    return (file + 21) + rank * 10
+def get_square(file, rank): return (file + 21) + rank * 10
 
 
-def piece_index(piece, piece_num):
-    return piece * 10 + piece_num
+def piece_index(piece, piece_num): return piece * 10 + piece_num
 
 
 def rand_32():
@@ -111,10 +117,26 @@ def init_sq_120to64():
 
 sq_120to64, sq_64to120 = init_sq_120to64()
 
+move_flag_ep = 0x40000
+move_flag_ps = 0x80000
+move_flag_castle = 0x1000000
+move_flag_captured = 0x7C000
+move_flag_prom = 0xF00000
 
-def sq64(sq120):
-    return sq_120to64[sq120]
+
+def sq64(sq120): return sq_120to64[sq120]
 
 
-def sq120(sq64):
-    return sq_64to120[sq64]
+def sq120(sq64): return sq_64to120[sq64]
+
+
+def from_sq(move): return move & 0x7F
+
+
+def to_sq(move): return (move >> 7) & 0x7F
+
+
+def captured(move): return (move >> 14) & 0xF
+
+
+def promoted(move): return (move >> 20) & 0xF
