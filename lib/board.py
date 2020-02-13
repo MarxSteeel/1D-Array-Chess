@@ -1,5 +1,6 @@
 import lib.defs as defs
 from lib.movegen import MoveGenerator
+from lib.makemove import MoveMaker
 
 
 class Board(object):
@@ -135,15 +136,66 @@ class Board(object):
     def generate_moves(self):
         self.move_generator.generate_moves()
 
+    def make_move(self, move):
+        self.move_maker.make_move(move)
+
     def print_move_list(self):
         i = 1
         for move in self.move_list:
             print("Move " + str(i) + ": " + self._print_move(move))
             i += 1
 
+    def hash_piece(self, sq, piece):
+        self.position_key ^= defs.piece_keys[piece * 120 + sq]
+
+    def hash_castle(self):
+        self.position_key ^= defs.castle_keys[self.castle_permit]
+
+    def hash_side(self):
+        self.position_key ^= defs.side_key
+
+    def hash_ep(self):
+        self.position_key ^= defs.piece_keys[self.en_passant]
+
+    def check_board(self):
+        t_piece_num = [0] * 13
+        t_material = [0, 0]
+        for t_piece in range(1, defs.pieces["bk"]):
+            for t_num in range(self.piece_num[t_piece]):
+                sq_120 = self.p_list[defs.piece_index(t_piece, t_num)]
+                if self.pieces[sq_120] != t_piece:
+                    print("Error in p_list")
+                    return False
+        for sq_64 in range(64):
+            sq_120 = defs.sq120(sq_64)
+            t_piece = self.pieces[sq_120]
+            t_piece_num[t_piece] += 1
+            if t_piece != 0:
+                t_material[defs.piece_col[t_piece]] += defs.piece_val[t_piece]
+        for t_piece in range(1, defs.pieces["bk"]):
+            if t_piece_num[t_piece] != self.piece_num[t_piece]:
+                print("Error t_piece_num")
+                return False
+        white = t_material[defs.colors["white"]] ==\
+            self.material[defs.colors["white"]]
+        black = t_material[defs.colors["black"]] ==\
+            self.material[defs.colors["black"]]
+        if (not white) or (not black):
+            print("Error t_material")
+            return False
+        if self.side != defs.colors["white"] and\
+                self.side != defs.colors["black"]:
+            print("Error board.side")
+            return False
+        if self._generate_position_key() != self.position_key:
+            print("Error position_key")
+            return False
+        return True
+
     def _reset(self):
         self.files, self.ranks = self._init_files_ranks()
         self.move_generator = MoveGenerator(self)
+        self.move_maker = MoveMaker(self)
         self.pieces = [defs.squares["offboard"]] * defs.brd_sq_num
         for i in range(64):
             self.pieces[defs.sq120(i)] = defs.pieces["empty"]
@@ -151,16 +203,28 @@ class Board(object):
         self.piece_num = [0] * 13
         self.side = defs.colors["both"]
         self.fifty_move = 0
-        self.his_ply = 0
+        self.history_ply = 0
+        self.history = self._init_history()
         self.ply = 0
         self.en_passant = defs.squares["no_sq"]
         self.castle_permit = 0
         self.material = [0, 0]
-        self.position_key = self._generate_position_key()
+        self.position_key = self._init_history
         self.ply = 0
         self.move_list = []
         self.move_scores = []
         self.move_list_start = [0]
+
+    def _take_move(self):
+        self.move_maker.take_move()
+
+    def _init_history(self):
+        history = []
+        for i in range(defs.max_game_moves):
+            item = {"move": "no_move", "castle_perm": 0, "en_passant": 0,
+                "fifty_move": 0, "position_key": 0}
+            history.append(item)
+        return history
 
     def _print_move(self, move):
         file_from = self.files[defs.from_sq(move)]
